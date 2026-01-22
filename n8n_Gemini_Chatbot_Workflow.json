@@ -135,8 +135,22 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\n  \"session\": \"default\",\n  \"chatId\": \"{{ $('Webhook').item.json.body.payload._data.Info.Sender }}\",\n  \"text\": \"{{ $json.content.parts[0].text }}\"\n}",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "session",
+              "value": "default"
+            },
+            {
+              "name": "chatId",
+              "value": "={{ $('Webhook').item.json.body.payload.from }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.content.parts[0].text }}"
+            }
+          ]
+        },
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -206,7 +220,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b0a0a3d7-bbf4-4eca-9abf-bb6a6b393ed4",
+  "versionId": "c46a1d80-8d59-42b0-afdd-8c474f448c28",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f8ebaa6faad18ce321c365ddb633ae5b8d2aa9b6a657f475c9c68905fc421676"
