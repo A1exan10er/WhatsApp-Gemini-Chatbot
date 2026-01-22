@@ -1,0 +1,216 @@
+{
+  "name": "n8n_Gemini_Chatbot_Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2c11429f-ea07-4734-a960-8f8e9479e784",
+      "name": "Webhook",
+      "webhookId": "4f5b3f77-e614-443a-9d23-0c803b6c4af1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a0efbbc6-ce5e-46c4-8350-a2408bd5c81c",
+              "leftValue": "={{ $json.body.payload.fromMe }}",
+              "rightValue": "={{ false }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8398b628-7d21-45f7-ba63-73cea2793d2b",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "1_I_mmZfiE7Vpq5kjLrtISnANLcMyWNfowEpGeDi2wpE",
+          "mode": "list",
+          "cachedResultName": "MyWhatsAppBot",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_I_mmZfiE7Vpq5kjLrtISnANLcMyWNfowEpGeDi2wpE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Config",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_I_mmZfiE7Vpq5kjLrtISnANLcMyWNfowEpGeDi2wpE/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Key",
+              "lookupValue": "SystemPrompt"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "977a1b45-29b0-47ea-9d1d-84d06583cdb0",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleApi": {
+          "id": "8Pc1K6UQ0RT0CPYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $('Webhook').item.json.body.payload.body }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "={{ $('Get row(s) in sheet').item.json.Value }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "e15902e8-412e-4dad-a4b6-c052e12be50c",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "yUohf6dsd4qkDlPk",
+          "name": "Google Gemini API for n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://192.168.178.75:3001/api/sendText",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"session\": \"default\",\n  \"chatId\": \"{{ $('Webhook').item.json.body.payload._data.Info.Sender }}\",\n  \"text\": \"{{ $json.content.parts[0].text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        976,
+        0
+      ],
+      "id": "741d517f-b35e-4ce3-b0a7-51f1bc473834",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "O8k50ZYL4m9shtgf",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b0a0a3d7-bbf4-4eca-9abf-bb6a6b393ed4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f8ebaa6faad18ce321c365ddb633ae5b8d2aa9b6a657f475c9c68905fc421676"
+  },
+  "id": "qBvNf9Kv94pr0rVg",
+  "tags": []
+}
